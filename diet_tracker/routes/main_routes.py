@@ -1,5 +1,5 @@
 import datetime
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect, url_for, Response
 from routes.auth_routes import login_required
 from models import ProfileModel, FoodLogModel, WaterModel, WeightModel, WorkoutTrackerModel, FoodModel
 
@@ -106,3 +106,19 @@ def dashboard():
         chart_days=chart_days,
         chart_calories=chart_calories
     )
+
+@main_bp.route('/sitemap.xml')
+def sitemap():
+    pages = [
+        url_for('main.landing', _external=True)
+    ]
+
+    xml = '<?xml version="1.0" encoding="UTF-8"?>'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+
+    for page in pages:
+        xml += f'<url><loc>{page}</loc></url>'
+
+    xml += '</urlset>'
+
+    return Response(xml, mimetype='application/xml')

@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+instance/*.db
+instance/*.sqlite
+instance/*.sqlite3
+diet_tracker/instance/*.db
+diet_tracker/instance/*.sqlite
+diet_tracker/instance/*.sqlite3

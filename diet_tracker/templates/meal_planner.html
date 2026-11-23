@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Meal Planner | NutriTrack 3D{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Smart Meal Planner</h1>
+        <p class="page-subtitle">Design, save, and reuse customized meal combinations and planned macro days.</p>
+    </div>
+</div>
+
+<div class="grid-cols-3 mb-4">
+    <!-- Create New Plan Template Form -->
+    <div class="glass-card">
+        <h3 class="card-title mb-2"><i class="fa-solid fa-folder-plus text-neon"></i> Create Plan Template</h3>
+        <p class="small text-secondary mb-3">Group your favorite meals into a reusable daily plan.</p>
+
+        <form method="POST" action="{{ url_for('diet.meal_planner') }}">
+            <input type="hidden" name="action" value="create_plan">
+            <div class="form-group mb-2">
+                <label class="form-label small">Plan Name</label>
+                <input type="text" name="plan_name" class="form-control form-control-sm" placeholder="e.g. High Protein Leg Day" required>
+            </div>
+            <div class="form-group mb-3">
+                <label class="form-label small">Description / Notes</label>
+                <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="e.g. 160g protein, post-squat carbs"></textarea>
+            </div>
+            <button type="submit" class="btn-primary-glow btn-sm w-100">
+                <i class="fa-solid fa-check"></i> Create Template
+            </button>
+        </form>
+    </div>
+
+    <!-- Add Item to Existing Plan Form -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <h3 class="card-title mb-2"><i class="fa-solid fa-plus-circle text-cyan"></i> Add Items to a Meal Plan</h3>
+        <p class="small text-secondary mb-3">Add items from your Indian food catalog to any saved template.</p>
+
+        {% if saved_plans %}
+        <form method="POST" action="{{ url_for('diet.meal_planner') }}">
+            <input type="hidden" name="action" value="add_item">
+            <input type="hidden" name="calories_per_100g" id="hidden_cal_100">
+            <input type="hidden" name="protein_per_100g" id="hidden_p_100">
+            <input type="hidden" name="carbs_per_100g" id="hidden_c_100">
+            <input type="hidden" name="fat_per_100g" id="hidden_f_100">
+            <input type="hidden" name="food_name" id="hidden_food_name">
+
+            <div class="grid-cols-2 mb-3" style="gap: 16px;">
+                <div class="form-group mb-0">
+                    <label class="form-label small">Select Target Plan</label>
+                    <select name="plan_id" class="form-control" required>
+                        {% for p in saved_plans %}
+                        <option value="{{ p.id }}">{{ p.plan_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label small">Meal Slot</label>
+                    <select name="meal_type" class="form-control">
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="snacks">Snacks</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-cols-2 mb-3" style="gap: 16px;">
+                <div class="form-group mb-0">
+                    <label class="form-label small">Select Food</label>
+                    <select id="food_item_select" name="food_item_id" class="form-control" required>
+                        <option value="" disabled selected>-- Select food item --</option>
+                        {% for food in foods %}
+                        <option value="{{ food.id }}"
+                                data-name="{{ food.name }}"
+                                data-cal="{{ food.calories_per_100g }}"
+                                data-protein="{{ food.protein_per_100g }}"
+                                data-carbs="{{ food.carbs_per_100g }}"
+                                data-fat="{{ food.fat_per_100g }}">
+                            {{ food.name }} ({{ food.calories_per_100g }} kcal/100g)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label small">Quantity (g)</label>
+                    <input type="number" id="quantity_grams_input" name="quantity_grams" class="form-control" value="100" min="5" step="5" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-secondary-glow w-100">
+                <i class="fa-solid fa-plus"></i> Add Item to Plan
+            </button>
+        </form>
+        {% else %}
+        <div class="p-3 text-muted small">Please create a plan template on the left first.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- SAVED PLANS LIST -->
+<div class="glass-card">
+    <div class="card-header-flex">
+        <h3 class="card-title"><i class="fa-solid fa-layer-group"></i> Your Saved Meal Plans</h3>
+        <span class="text-secondary small">{{ saved_plans | length }} Templates Available</span>
+    </div>
+
+    {% if saved_plans %}
+    <div class="row">
+        {% for plan in saved_plans %}
+        <div class="glass-card mb-4 p-4" style="background: rgba(14, 22, 17, 0.95);">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <div>
+                    <h4 class="h5 font-weight-bold text-white mb-0">{{ plan.plan_name }}</h4>
+                    {% if plan.description %}<p class="small text-muted mb-0">{{ plan.description }}</p>{% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- 1-Click Log to Diary -->
+                    <form method="POST" action="{{ url_for('diet.meal_planner') }}" class="d-flex gap-2 align-items-center">
+                        <input type="hidden" name="action" value="log_to_diary">
+                        <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                        <button type="submit" class="btn-primary-glow btn-sm">
+                            <i class="fa-solid fa-calendar-check"></i> Log to Food Diary
+                        </button>
+                    </form>
+                    <!-- Delete Plan -->
+                    <form method="POST" action="{{ url_for('diet.meal_planner') }}" onsubmit="return confirm('Delete this plan?');">
+                        <input type="hidden" name="action" value="delete_plan">
+                        <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                        <button type="submit" class="btn-danger-outline btn-sm">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Planned Totals -->
+            <div class="d-flex gap-4 p-2 px-3 rounded mb-3 small" style="background: rgba(0, 230, 118, 0.05); border: 1px solid rgba(0, 230, 118, 0.15);">
+                <span>Planned Calories: <strong class="text-neon mono-num">{{ plan.total_calories }} kcal</strong></span>
+                <span>Protein: <strong class="text-cyan mono-num">{{ plan.total_protein }}g</strong></span>
+                <span>Carbs: <strong class="text-yellow mono-num">{{ plan.total_carbs }}g</strong></span>
+                <span>Fat: <strong class="text-red mono-num">{{ plan.total_fat }}g</strong></span>
+            </div>
+
+            <!-- Items Table -->
+            {% if plan.items %}
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Meal Slot</th>
+                            <th>Food Item</th>
+                            <th>Grams</th>
+                            <th>Calories</th>
+                            <th>Protein</th>
+                            <th>Carbs</th>
+                            <th>Fat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in plan.items %}
+                        <tr>
+                            <td class="text-uppercase small font-weight-bold text-neon">{{ item.meal_type }}</td>
+                            <td class="text-white">{{ item.food_name }}</td>
+                            <td>{{ item.quantity_grams }}g</td>
+                            <td class="mono-num text-neon">{{ item.calories }} kcal</td>
+                            <td class="mono-num text-cyan">{{ item.protein }}g</td>
+                            <td class="mono-num text-yellow">{{ item.carbs }}g</td>
+                            <td class="mono-num text-red">{{ item.fat }}g</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="small text-muted mb-0">No foods added to this plan yet. Use the form above to add items.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="fa-solid fa-calendar-day h2 mb-2 d-block text-secondary"></i>
+        <p>No saved meal plans yet. Create your first plan above!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

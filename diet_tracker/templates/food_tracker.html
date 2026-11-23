@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Diet & Food Tracker | NutriTrack 3D{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Diet & Food Tracker</h1>
+        <p class="page-subtitle">Track your daily meals, Indian staples, calories, and macronutrients with precision.</p>
+    </div>
+
+    <!-- Date Navigator -->
+    <div class="d-flex align-items-center gap-2">
+        <form method="GET" action="{{ url_for('diet.food_tracker') }}" class="d-flex align-items-center gap-2">
+            <input type="date" name="date" value="{{ log_date }}" class="form-control" style="width: auto; padding: 7px 12px;" onchange="this.form.submit()">
+            <noscript><button type="submit" class="btn-secondary-glow btn-sm">Go</button></noscript>
+        </form>
+        <a href="{{ url_for('diet.food_tracker') }}" class="btn-secondary-glow btn-sm">Today</a>
+    </div>
+</div>
+
+<!-- NUTRITION SUMMARY BANNER -->
+<div class="grid-cols-4 mb-4">
+    <div class="glass-card p-3">
+        <span class="stat-label">TOTAL CALORIES</span>
+        <div class="h3 font-weight-bold mono-num text-white mt-1 mb-1">
+            {{ totals.calories | round_val }} <span class="stat-unit">/ {{ calorie_target | round_val }} kcal</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill fill-neon" style="width: {{ (totals.calories / calorie_target * 100) if calorie_target else 0 }}%;"></div>
+        </div>
+        <div class="small text-secondary d-flex justify-content-between">
+            <span>Remaining:</span>
+            <strong class="text-neon">{{ calories_remaining }} kcal</strong>
+        </div>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">PROTEIN</span>
+        <div class="h3 font-weight-bold mono-num text-cyan mt-1 mb-1">
+            {{ totals.protein | round_val }} <span class="stat-unit">/ {{ profile.protein_target | round_val }}g</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill fill-cyan" style="width: {{ (totals.protein / profile.protein_target * 100) if profile.protein_target else 0 }}%;"></div>
+        </div>
+        <div class="small text-secondary">Muscle repair & synthesis</div>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">CARBOHYDRATES</span>
+        <div class="h3 font-weight-bold mono-num text-yellow mt-1 mb-1">
+            {{ totals.carbs | round_val }} <span class="stat-unit">/ {{ profile.carbs_target | round_val }}g</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill fill-yellow" style="width: {{ (totals.carbs / profile.carbs_target * 100) if profile.carbs_target else 0 }}%;"></div>
+        </div>
+        <div class="small text-secondary">Glycogen & daily energy</div>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">HEALTHY FATS</span>
+        <div class="h3 font-weight-bold mono-num text-red mt-1 mb-1">
+            {{ totals.fat | round_val }} <span class="stat-unit">/ {{ profile.fat_target | round_val }}g</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill fill-red" style="width: {{ (totals.fat / profile.fat_target * 100) if profile.fat_target else 0 }}%;"></div>
+        </div>
+        <div class="small text-secondary">Hormonal & cellular health</div>
+    </div>
+</div>
+
+<!-- LOG FOOD FORM & CUSTOM FOOD ROW -->
+<div class="grid-cols-3 mb-4">
+    <!-- Log Food to Diary Form -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header-flex">
+            <h3 class="card-title"><i class="fa-solid fa-plus-circle"></i> Log Food Item for {{ log_date }}</h3>
+            <span class="badge badge-gym">Instant Macro Calculation</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('diet.food_tracker', date=log_date) }}">
+            <input type="hidden" name="action" value="add_log">
+            <input type="hidden" name="hidden_cal_100" id="hidden_cal_100">
+            <input type="hidden" name="hidden_p_100" id="hidden_p_100">
+            <input type="hidden" name="hidden_c_100" id="hidden_c_100">
+            <input type="hidden" name="hidden_f_100" id="hidden_f_100">
+            <input type="hidden" name="hidden_food_name" id="hidden_food_name">
+
+            <div class="grid-cols-3 mb-3" style="gap: 16px;">
+                <!-- Food Select -->
+                <div class="form-group mb-0" style="grid-column: span 2;">
+                    <label class="form-label" for="food_item_select">Select Food Item (Indian Staples & High Protein)</label>
+                    <select id="food_item_select" name="food_item_id" class="form-control" required>
+                        <option value="" disabled selected>-- Select or search food item --</option>
+                        {% for food in foods %}
+                        <option value="{{ food.id }}"
+                                data-name="{{ food.name }}"
+                                data-cal="{{ food.calories_per_100g }}"
+                                data-protein="{{ food.protein_per_100g }}"
+                                data-carbs="{{ food.carbs_per_100g }}"
+                                data-fat="{{ food.fat_per_100g }}">
+                            {{ food.name }} [{{ food.category }} - {{ food.calories_per_100g }} kcal/100g]
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Meal Type -->
+                <div class="form-group mb-0">
+                    <label class="form-label" for="meal_type_select">Meal Category</label>
+                    <select id="meal_type_select" name="meal_type" class="form-control">
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="snacks">Snacks</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-cols-2 align-items-center mb-3" style="gap: 16px;">
+                <div class="form-group mb-0">
+                    <label class="form-label" for="quantity_grams_input">Quantity in Grams (g)</label>
+                    <div style="position: relative;">
+                        <input type="number" id="quantity_grams_input" name="quantity_grams" class="form-control" value="100" min="1" step="5" required>
+                        <span style="position: absolute; right: 14px; top: 12px; color: var(--text-muted); font-size: 0.85rem;">grams</span>
+                    </div>
+                </div>
+
+                <!-- Real-time Macro Preview Indicators -->
+                <div class="glass-card p-2" style="background: rgba(10, 16, 12, 0.9);">
+                    <div class="small text-muted mb-1">Calculated Nutrition for this portion:</div>
+                    <div class="d-flex justify-content-between small font-weight-bold">
+                        <span>Calories: <strong id="preview_calories" class="text-neon mono-num">0 kcal</strong></span>
+                        <span>P: <strong id="preview_protein" class="text-cyan mono-num">0g</strong></span>
+                        <span>C: <strong id="preview_carbs" class="text-yellow mono-num">0g</strong></span>
+                        <span>F: <strong id="preview_fat" class="text-red mono-num">0g</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary-glow w-100">
+                <i class="fa-solid fa-check"></i> Add to Today's Diary
+            </button>
+        </form>
+    </div>
+
+    <!-- Create Custom Food Item Card -->
+    <div class="glass-card">
+        <h3 class="card-title mb-2"><i class="fa-solid fa-bowl-rice text-neon"></i> Custom Food Creator</h3>
+        <p class="small text-secondary mb-3">Add your personal recipes, regional foods, or protein powders to your database.</p>
+
+        <form method="POST" action="{{ url_for('diet.create_custom_food') }}">
+            <div class="form-group mb-2">
+                <label class="form-label small mb-1">Food Name</label>
+                <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Grandma's Ragi Dosa" required>
+            </div>
+            <div class="form-group mb-2">
+                <label class="form-label small mb-1">Category</label>
+                <input type="text" name="category" class="form-control form-control-sm" placeholder="e.g. Indian Staples" value="Custom">
+            </div>
+            <div class="grid-cols-2 mb-2" style="gap: 8px;">
+                <div>
+                    <label class="form-label small mb-1">Calories / 100g</label>
+                    <input type="number" step="0.1" name="calories_per_100g" class="form-control form-control-sm" placeholder="kcal" required>
+                </div>
+                <div>
+                    <label class="form-label small mb-1">Protein / 100g</label>
+                    <input type="number" step="0.1" name="protein_per_100g" class="form-control form-control-sm" placeholder="grams" required>
+                </div>
+            </div>
+            <div class="grid-cols-2 mb-3" style="gap: 8px;">
+                <div>
+                    <label class="form-label small mb-1">Carbs / 100g</label>
+                    <input type="number" step="0.1" name="carbs_per_100g" class="form-control form-control-sm" placeholder="grams" required>
+                </div>
+                <div>
+                    <label class="form-label small mb-1">Fat / 100g</label>
+                    <input type="number" step="0.1" name="fat_per_100g" class="form-control form-control-sm" placeholder="grams" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-secondary-glow btn-sm w-100">
+                <i class="fa-solid fa-plus"></i> Save to Database
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- DAILY MEALS LOG TABLE BREAKDOWN -->
+<div class="glass-card">
+    <div class="card-header-flex">
+        <h3 class="card-title"><i class="fa-solid fa-book-open"></i> Logged Meals for {{ log_date }}</h3>
+        <span class="mono-num text-neon font-weight-bold">{{ totals.calories | round_val }} Total kcal</span>
+    </div>
+
+    {% for meal_type in ['breakfast', 'lunch', 'dinner', 'snacks'] %}
+    <div class="meal-block mb-4">
+        <div class="d-flex justify-content-between align-items-center p-2 px-3 rounded mb-2"
+             style="background: rgba(16, 25, 20, 0.85); border-left: 3px solid {% if meal_type=='breakfast' %}var(--neon-green){% elif meal_type=='lunch' %}var(--accent-cyan){% elif meal_type=='dinner' %}var(--accent-yellow){% else %}var(--emerald-400){% endif %};">
+            <h4 class="h6 mb-0 font-weight-bold text-white text-uppercase" style="letter-spacing: 0.05em;">
+                {{ meal_type }}
+            </h4>
+            <div class="small text-secondary d-flex gap-3">
+                <span>Calories: <strong class="text-white">{{ meal_subtotals[meal_type].calories }} kcal</strong></span>
+                <span>P: <strong class="text-cyan">{{ meal_subtotals[meal_type].protein }}g</strong></span>
+                <span>C: <strong class="text-yellow">{{ meal_subtotals[meal_type].carbs }}g</strong></span>
+                <span>F: <strong class="text-red">{{ meal_subtotals[meal_type].fat }}g</strong></span>
+            </div>
+        </div>
+
+        {% if meals[meal_type] %}
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Food Item</th>
+                        <th>Portion</th>
+                        <th>Calories</th>
+                        <th>Protein</th>
+                        <th>Carbs</th>
+                        <th>Fat</th>
+                        <th style="width: 80px; text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in meals[meal_type] %}
+                    <tr>
+                        <td class="font-weight-bold text-white">{{ item.food_name }}</td>
+                        <td><span class="badge badge-gym">{{ item.quantity_grams }}g</span></td>
+                        <td class="mono-num text-neon">{{ item.calories | round_val }} kcal</td>
+                        <td class="mono-num text-cyan">{{ item.protein | round_val }}g</td>
+                        <td class="mono-num text-yellow">{{ item.carbs | round_val }}g</td>
+                        <td class="mono-num text-red">{{ item.fat | round_val }}g</td>
+                        <td class="text-center">
+                            <form method="POST" action="{{ url_for('diet.delete_food_log', log_id=item.id) }}" onsubmit="return confirm('Remove this food entry?');">
+                                <input type="hidden" name="date" value="{{ log_date }}">
+                                <button type="submit" class="btn-danger-outline btn-sm" title="Delete entry">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="small text-muted py-2 px-3 mb-0">No food items recorded for {{ meal_type }}. Use the form above to log items.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

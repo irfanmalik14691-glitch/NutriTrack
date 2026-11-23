@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Home Workouts (No Equipment Calisthenics) | NutriTrack 3D{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Home Workout & Calisthenics Guide</h1>
+        <p class="page-subtitle">Master functional bodyweight movements, progressive overloads, and full-body conditioning from home.</p>
+    </div>
+</div>
+
+<!-- MUSCLE FILTER PILLS -->
+<div class="muscle-pills-bar mb-4">
+    <a href="{{ url_for('fitness.home_workouts') }}" class="muscle-select-pill {% if not selected_muscle %}active{% endif %}">
+        <i class="fa-solid fa-layer-group mr-1"></i> All Body Parts ({{ exercises | length }})
+    </a>
+    {% for m in muscle_groups %}
+    <a href="{{ url_for('fitness.home_workouts', muscle=m) }}" class="muscle-select-pill {% if selected_muscle == m %}active{% endif %}">
+        {{ m }}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- EXERCISES GRID -->
+<div class="grid-cols-2 mb-4" style="gap: 20px;">
+    {% for ex in exercises %}
+    <div class="glass-card p-4">
+        <div class="card-header-flex mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                    <i class="fa-solid fa-house"></i>
+                </div>
+                <div>
+                    <h3 class="h5 font-weight-bold text-white mb-0">{{ ex.name }}</h3>
+                    <span class="text-cyan small font-weight-bold">{{ ex.muscle_group }} &bull; {{ ex.secondary_muscles }}</span>
+                </div>
+            </div>
+            <span class="badge badge-home">{{ ex.difficulty }}</span>
+        </div>
+
+        <p class="text-secondary small mb-3">{{ ex.technique }}</p>
+
+        <!-- Prescription Badges -->
+        <div class="d-flex gap-3 mb-3 small">
+            <span class="tag-pill"><i class="fa-solid fa-layer-group text-neon"></i> {{ ex.recommended_sets }} Sets</span>
+            <span class="tag-pill"><i class="fa-solid fa-repeat text-cyan"></i> {{ ex.recommended_reps }} Reps</span>
+            <span class="tag-pill"><i class="fa-solid fa-stopwatch text-yellow"></i> {{ ex.rest_seconds }}s Rest</span>
+        </div>
+
+        <!-- Step-by-Step Instructions -->
+        <div class="p-3 rounded mb-3 small" style="background: rgba(10, 16, 12, 0.85); border: 1px solid var(--border-subtle);">
+            <strong class="text-neon d-block mb-1"><i class="fa-solid fa-list-check mr-1"></i> Step-by-Step Technique:</strong>
+            <div style="white-space: pre-line; line-height: 1.5; color: var(--text-secondary);">{{ ex.step_by_step }}</div>
+        </div>
+
+        <!-- Posture & Mistakes -->
+        <div class="grid-cols-2 mb-3 small" style="gap: 12px;">
+            <div class="p-2 rounded" style="background: rgba(0, 230, 118, 0.05); border: 1px solid rgba(0, 230, 118, 0.15);">
+                <strong class="text-neon d-block mb-1"><i class="fa-solid fa-check"></i> Posture Tips:</strong>
+                <span class="text-secondary">{{ ex.posture_tips }}</span>
+            </div>
+            <div class="p-2 rounded" style="background: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.15);">
+                <strong class="text-red d-block mb-1"><i class="fa-solid fa-xmark"></i> Avoid Errors:</strong>
+                <span class="text-secondary">{{ ex.common_mistakes }}</span>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-2" style="border-top: 1px solid var(--border-subtle);">
+            <span class="small text-muted">Equipment: <strong>{{ ex.equipment }}</strong></span>
+            <a href="{{ url_for('fitness.workout_tracker') }}" class="btn-sm btn-secondary-glow">
+                <i class="fa-solid fa-clipboard-check text-neon mr-1"></i> Log in Tracker
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

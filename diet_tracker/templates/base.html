@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NutriTrack 3D | Futuristic Fitness & Nutrition Platform{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- External Libraries (Three.js, GLTFLoader, Chart.js, GSAP) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-dark text-light antialiased">
+    <!-- Ambient Background Light Orbs -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <div class="app-layout">
+        {% if session.get('user_id') %}
+        <!-- SIDEBAR NAVIGATION (LOGGED IN) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('main.dashboard') }}" class="brand-logo">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-bolt-lightning"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">Nutri<span class="text-neon">Track</span></span>
+                        <span class="brand-badge">3D ELITE</span>
+                    </div>
+                </a>
+                <button class="mobile-close-btn" id="sidebarClose">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Profile Mini Widget -->
+            <div class="sidebar-profile">
+                <div class="avatar-ring">
+                    <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <div class="profile-meta">
+                    <span class="profile-name">{{ session.get('username', 'Athlete') }}</span>
+                    <span class="profile-goal">
+                        {% if profile %}{{ profile.fitness_goal }}{% else %}Fitness Athlete{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <div class="nav-section-title">CORE PLATFORM</div>
+                <a href="{{ url_for('main.dashboard') }}" class="nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('diet.food_tracker') }}" class="nav-item {% if request.endpoint == 'diet.food_tracker' %}active{% endif %}">
+                    <i class="fa-solid fa-utensils"></i>
+                    <span>Diet Tracker</span>
+                </a>
+                <a href="{{ url_for('diet.meal_planner') }}" class="nav-item {% if request.endpoint == 'diet.meal_planner' %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    <span>Meal Planner</span>
+                </a>
+                <a href="{{ url_for('diet.water_tracker') }}" class="nav-item {% if request.endpoint == 'diet.water_tracker' %}active{% endif %}">
+                    <i class="fa-solid fa-droplet"></i>
+                    <span>Water Tracker</span>
+                </a>
+
+                <div class="nav-section-title">3D & FITNESS TRAINING</div>
+                <a href="{{ url_for('fitness.muscle_anatomy') }}" class="nav-item highlight-nav {% if request.endpoint == 'fitness.muscle_anatomy' %}active{% endif %}">
+                    <i class="fa-solid fa-cube"></i>
+                    <span>3D Muscle Anatomy</span>
+                    <span class="pill-badge">3D</span>
+                </a>
+                <a href="{{ url_for('fitness.fitness_goals') }}" class="nav-item {% if request.endpoint == 'fitness.fitness_goals' %}active{% endif %}">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span>Fitness Goals Guide</span>
+                </a>
+                <a href="{{ url_for('fitness.home_workouts') }}" class="nav-item {% if request.endpoint == 'fitness.home_workouts' %}active{% endif %}">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Home Workouts</span>
+                </a>
+                <a href="{{ url_for('fitness.gym_workouts') }}" class="nav-item {% if request.endpoint == 'fitness.gym_workouts' %}active{% endif %}">
+                    <i class="fa-solid fa-dumbbell"></i>
+                    <span>Gym & Machines</span>
+                </a>
+                <a href="{{ url_for('fitness.exercise_library') }}" class="nav-item {% if request.endpoint == 'fitness.exercise_library' %}active{% endif %}">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                    <span>Exercise Library</span>
+                </a>
+                <a href="{{ url_for('fitness.workout_planner') }}" class="nav-item {% if request.endpoint == 'fitness.workout_planner' %}active{% endif %}">
+                    <i class="fa-solid fa-calendar-week"></i>
+                    <span>Workout Planner</span>
+                </a>
+                <a href="{{ url_for('fitness.workout_tracker') }}" class="nav-item {% if request.endpoint == 'fitness.workout_tracker' %}active{% endif %}">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    <span>Sets & Reps Tracker</span>
+                </a>
+
+                <div class="nav-section-title">ANALYTICS & AI</div>
+                <a href="{{ url_for('progress.progress') }}" class="nav-item {% if request.endpoint == 'progress.progress' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Progress Tracker</span>
+                </a>
+                <a href="{{ url_for('progress.reports') }}" class="nav-item {% if request.endpoint == 'progress.reports' %}active{% endif %}">
+                    <i class="fa-solid fa-file-csv"></i>
+                    <span>Reports & CSV</span>
+                </a>
+                <a href="{{ url_for('assistant.assistant') }}" class="nav-item {% if request.endpoint == 'assistant.assistant' %}active{% endif %}">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span>AI Assistant</span>
+                    <span class="pill-badge ai-badge">AI</span>
+                </a>
+                <a href="{{ url_for('auth.profile') }}" class="nav-item {% if request.endpoint == 'auth.profile' %}active{% endif %}">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span>Profile Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Sign Out</span>
+                </a>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- MAIN VIEW WRAPPER -->
+        <div class="main-wrapper {% if not session.get('user_id') %}full-width{% endif %}">
+            <!-- TOP APP BAR -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    {% if session.get('user_id') %}
+                    <button class="mobile-toggle" id="sidebarToggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    {% else %}
+                    <a href="{{ url_for('main.landing') }}" class="brand-logo">
+                        <div class="brand-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                        <span class="brand-title">Nutri<span class="text-neon">Track</span> 3D</span>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="top-bar-right">
+                    {% if session.get('user_id') %}
+                    <a href="{{ url_for('fitness.muscle_anatomy') }}" class="btn-top-quick">
+                        <i class="fa-solid fa-cube text-neon"></i>
+                        <span>3D Anatomy</span>
+                    </a>
+                    <a href="{{ url_for('diet.food_tracker') }}" class="btn-top-quick">
+                        <i class="fa-solid fa-plus text-neon"></i>
+                        <span>Log Food</span>
+                    </a>
+                    <a href="{{ url_for('auth.profile') }}" class="user-chip">
+                        <i class="fa-solid fa-user-circle"></i>
+                        <span>{{ session.get('username') }}</span>
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn-link">Sign In</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn-primary-glow">Get Started</a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- FLASH ALERTS -->
+            <div class="content-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash-alert flash-{{ category }} animate-slide-down">
+                        <div class="flash-content">
+                            {% if category == 'success' %}
+                            <i class="fa-solid fa-circle-check text-neon"></i>
+                            {% elif category == 'error' %}
+                            <i class="fa-solid fa-circle-exclamation text-red"></i>
+                            {% elif category == 'warning' %}
+                            <i class="fa-solid fa-triangle-exclamation text-yellow"></i>
+                            {% else %}
+                            <i class="fa-solid fa-circle-info text-cyan"></i>
+                            {% endif %}
+                            <span>{{ message }}</span>
+                        </div>
+                        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <!-- PAGE BODY -->
+                <main class="page-body">
+                    {% block content %}{% endblock %}
+                </main>
+
+                <!-- FOOTER -->
+                <footer class="app-footer">
+                    <div class="footer-inner">
+                        <div class="footer-left">
+                            <span>&copy; 2026 NutriTrack 3D Platform. Designed for High Performance.</span>
+                        </div>
+                        <div class="footer-right">
+                            <span class="disclaimer-text">
+                                <i class="fa-solid fa-circle-info"></i> Calculations are scientifically estimated metabolic guidelines. Consult a physician for clinical protocols.
+                            </span>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

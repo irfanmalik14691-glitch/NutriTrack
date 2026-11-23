@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Gym Training & Machine Guide | NutriTrack 3D{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Gym Workout & Machine Guide</h1>
+        <p class="page-subtitle">Master every gym machine, cable station, and barbell movement with professional biomechanics and injury prevention.</p>
+    </div>
+</div>
+
+<!-- MUSCLE GROUP FILTER PILLS -->
+<div class="muscle-pills-bar mb-4">
+    {% for m in muscle_groups %}
+    <a href="{{ url_for('fitness.gym_workouts', muscle=m) }}" class="muscle-select-pill {% if selected_muscle == m %}active{% endif %}">
+        <i class="fa-solid fa-dumbbell mr-1"></i> {{ m }}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- MACHINES & EXERCISES LIST -->
+<div class="grid-cols-2 mb-4" style="gap: 24px;">
+    {% for ex in exercises %}
+    <div class="glass-card p-4">
+        <div class="card-header-flex mb-2">
+            <div>
+                <span class="badge badge-gym mb-1">{{ ex.machine_name or ex.equipment }}</span>
+                <h3 class="h5 font-weight-bold text-white mb-0">{{ ex.name }}</h3>
+                <span class="text-neon small font-weight-bold">Targets: {{ ex.muscle_group }} &bull; {{ ex.secondary_muscles }}</span>
+            </div>
+            <span class="badge" style="background: rgba(255,255,255,0.06); color: var(--text-secondary);">{{ ex.difficulty }}</span>
+        </div>
+
+        <p class="text-secondary small mb-3">{{ ex.technique }}</p>
+
+        <!-- Sets, Reps, Rest Badges -->
+        <div class="d-flex gap-3 mb-3 small">
+            <span class="tag-pill"><i class="fa-solid fa-layer-group text-neon"></i> {{ ex.recommended_sets }} Working Sets</span>
+            <span class="tag-pill"><i class="fa-solid fa-repeat text-cyan"></i> {{ ex.recommended_reps }} Reps</span>
+            <span class="tag-pill"><i class="fa-solid fa-stopwatch text-yellow"></i> {{ ex.rest_seconds }}s Rest</span>
+        </div>
+
+        <!-- How to Use Machine / Step-by-Step -->
+        <div class="p-3 rounded mb-3 small" style="background: rgba(10, 16, 12, 0.9); border: 1px solid var(--border-subtle);">
+            <strong class="text-neon d-block mb-1"><i class="fa-solid fa-cogs mr-1"></i> How to Set Up & Operate Machine:</strong>
+            <div style="white-space: pre-line; line-height: 1.5; color: var(--text-secondary);">{{ ex.step_by_step }}</div>
+        </div>
+
+        <!-- Correct Posture -->
+        <div class="p-2 rounded mb-2 small" style="background: rgba(0, 230, 118, 0.05); border: 1px solid rgba(0, 230, 118, 0.15);">
+            <strong class="text-neon d-block mb-1"><i class="fa-solid fa-person-chalkboard"></i> Correct Posture & Joint Alignment:</strong>
+            <span class="text-secondary">{{ ex.posture_tips }}</span>
+        </div>
+
+        <!-- Mistakes & Safety Precaution -->
+        <div class="grid-cols-2 mb-3 small" style="gap: 12px;">
+            <div class="p-2 rounded" style="background: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.15);">
+                <strong class="text-red d-block mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Common Errors:</strong>
+                <span class="text-secondary">{{ ex.common_mistakes }}</span>
+            </div>
+            <div class="p-2 rounded" style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15);">
+                <strong class="text-yellow d-block mb-1"><i class="fa-solid fa-shield-halved"></i> Safety & Pin Settings:</strong>
+                <span class="text-secondary">{{ ex.safety_precautions }}</span>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-2" style="border-top: 1px solid var(--border-subtle);">
+            <span class="small text-muted"><i class="fa-solid fa-bolt text-neon mr-1"></i> Equipment: <strong>{{ ex.equipment }}</strong></span>
+            <a href="{{ url_for('fitness.workout_tracker') }}" class="btn-sm btn-secondary-glow">
+                <i class="fa-solid fa-plus text-neon mr-1"></i> Track Set in Gym Log
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

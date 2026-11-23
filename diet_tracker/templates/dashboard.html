@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | NutriTrack 3D Fitness Command Center{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Fitness Command Center</h1>
+        <p class="page-subtitle">Welcome back, <strong class="text-neon">{{ profile.name }}</strong>. Here is your metabolic and athletic status for today.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('diet.food_tracker') }}" class="btn-primary-glow">
+            <i class="fa-solid fa-plus"></i> Log Today's Food
+        </a>
+        <a href="{{ url_for('fitness.muscle_anatomy') }}" class="btn-secondary-glow">
+            <i class="fa-solid fa-cube text-neon"></i> 3D Anatomy
+        </a>
+    </div>
+</div>
+
+<!-- SECTION 1: TOP STATS ROW -->
+<div class="grid-cols-4 mb-4">
+    <!-- Card 1: Calories Consumed -->
+    <div class="glass-card stat-card">
+        <div class="stat-top">
+            <span class="stat-label">CALORIES CONSUMED</span>
+            <div class="stat-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
+        </div>
+        <div class="stat-value mono-num">
+            {{ calories_consumed | round_val }} <span class="stat-unit">/ {{ calorie_target | round_val }} kcal</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill fill-neon" style="width: {{ calorie_pct }}%;"></div>
+        </div>
+        <div class="stat-footer">
+            <span>{{ calorie_pct }}% of target</span>
+            <span class="text-neon font-weight-bold">{{ calories_remaining }} kcal left</span>
+        </div>
+    </div>
+
+    <!-- Card 2: Protein Target -->
+    <div class="glass-card stat-card">
+        <div class="stat-top">
+            <span class="stat-label">PROTEIN INTAKE</span>
+            <div class="stat-icon" style="background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.3); color: var(--accent-cyan);">
+                <i class="fa-solid fa-drumstick-bite"></i>
+            </div>
+        </div>
+        <div class="stat-value mono-num text-cyan">
+            {{ daily_totals.protein | round_val }} <span class="stat-unit">/ {{ protein_target | round_val }}g</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill fill-cyan" style="width: {{ protein_pct }}%;"></div>
+        </div>
+        <div class="stat-footer">
+            <span>{{ protein_pct }}% completed</span>
+            <span>Target: 2.0g/kg</span>
+        </div>
+    </div>
+
+    <!-- Card 3: Water Hydration -->
+    <div class="glass-card stat-card">
+        <div class="stat-top">
+            <span class="stat-label">WATER HYDRATION</span>
+            <div class="stat-icon" style="background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3); color: #38bdf8;">
+                <i class="fa-solid fa-droplet"></i>
+            </div>
+        </div>
+        <div class="stat-value mono-num" style="color: #38bdf8;">
+            {{ water_today }} <span class="stat-unit">/ {{ water_target }} ml</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="background: linear-gradient(90deg, #0284c7, #38bdf8); width: {{ water_pct }}%;"></div>
+        </div>
+        <div class="stat-footer">
+            <span>{{ water_pct }}% achieved</span>
+            <form method="POST" action="{{ url_for('diet.water_tracker') }}" style="display: inline;">
+                <input type="hidden" name="amount_ml" value="250">
+                <button type="submit" class="btn-sm btn-secondary-glow" style="padding: 2px 8px; font-size: 0.75rem;">+250ml</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Card 4: Weight Progress & Goal -->
+    <div class="glass-card stat-card">
+        <div class="stat-top">
+            <span class="stat-label">GOAL: {{ profile.fitness_goal | upper }}</span>
+            <div class="stat-icon" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.3); color: var(--accent-yellow);">
+                <i class="fa-solid fa-weight-scale"></i>
+            </div>
+        </div>
+        <div class="stat-value mono-num text-yellow">
+            {{ profile.current_weight }} <span class="stat-unit">kg</span>
+        </div>
+        <div class="stat-footer mt-2">
+            <span>Target: <strong>{{ profile.target_weight }} kg</strong></span>
+            <span class="text-secondary">Delta: {{ weight_diff }} kg</span>
+        </div>
+        <div class="stat-footer">
+            <span>Workouts this week:</span>
+            <span class="text-neon font-weight-bold">{{ workout_stats.weekly_completed }} / {{ profile.workout_days }} completed</span>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 2: MACRO CARDS & CHARTS ROW -->
+<div class="grid-cols-3 mb-4">
+    <!-- Macro Distribution Breakdown Card -->
+    <div class="glass-card">
+        <div class="card-header-flex">
+            <h3 class="card-title"><i class="fa-solid fa-chart-pie"></i> Daily Macro Split</h3>
+            <span class="text-muted small">Target vs Actual</span>
+        </div>
+        <div style="position: relative; height: 210px; width: 100%;">
+            <canvas id="macroDoughnutChart"></canvas>
+        </div>
+        <div class="d-flex justify-content-between mt-3 text-center small">
+            <div>
+                <span class="d-block text-cyan font-weight-bold">{{ daily_totals.protein | round_val }}g</span>
+                <span class="text-muted">Protein ({{ protein_pct }}%)</span>
+            </div>
+            <div>
+                <span class="d-block text-yellow font-weight-bold">{{ daily_totals.carbs | round_val }}g</span>
+                <span class="text-muted">Carbs ({{ carbs_pct }}%)</span>
+            </div>
+            <div>
+                <span class="d-block text-red font-weight-bold">{{ daily_totals.fat | round_val }}g</span>
+                <span class="text-muted">Fat ({{ fat_pct }}%)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Calorie Intake History Chart -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header-flex">
+            <h3 class="card-title"><i class="fa-solid fa-chart-column"></i> 7-Day Calorie Intake Trend</h3>
+            <span class="text-neon small font-weight-bold">Target: {{ calorie_target | round_val }} kcal</span>
+        </div>
+        <div style="position: relative; height: 230px; width: 100%;">
+            <canvas id="weeklyCaloriesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 3: TODAY'S MEALS BREAKDOWN -->
+<div class="glass-card mb-4">
+    <div class="card-header-flex">
+        <h3 class="card-title"><i class="fa-solid fa-utensils"></i> Today's Nutrition Diary ({{ today }})</h3>
+        <a href="{{ url_for('diet.food_tracker') }}" class="btn-sm btn-secondary-glow">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Full Diary
+        </a>
+    </div>
+
+    <div class="grid-cols-4" style="gap: 16px;">
+        <!-- Breakfast -->
+        <div class="glass-card p-3" style="background: rgba(14, 22, 17, 0.9);">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid var(--border-subtle);">
+                <strong class="text-neon"><i class="fa-solid fa-mug-saucer mr-1"></i> Breakfast</strong>
+                <span class="small text-muted">{{ meals.breakfast | length }} items</span>
+            </div>
+            {% if meals.breakfast %}
+                <ul class="list-unstyled mb-0" style="list-style: none;">
+                {% for item in meals.breakfast %}
+                    <li class="d-flex justify-content-between small text-secondary py-1" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <span class="text-truncate" style="max-width: 140px;">{{ item.food_name }} ({{ item.quantity_grams }}g)</span>
+                        <span class="mono-num text-white">{{ item.calories | round_val }} kcal</span>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="small text-muted py-2 mb-0">No food logged yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Lunch -->
+        <div class="glass-card p-3" style="background: rgba(14, 22, 17, 0.9);">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid var(--border-subtle);">
+                <strong class="text-cyan"><i class="fa-solid fa-bowl-food mr-1"></i> Lunch</strong>
+                <span class="small text-muted">{{ meals.lunch | length }} items</span>
+            </div>
+            {% if meals.lunch %}
+                <ul class="list-unstyled mb-0" style="list-style: none;">
+                {% for item in meals.lunch %}
+                    <li class="d-flex justify-content-between small text-secondary py-1" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <span class="text-truncate" style="max-width: 140px;">{{ item.food_name }} ({{ item.quantity_grams }}g)</span>
+                        <span class="mono-num text-white">{{ item.calories | round_val }} kcal</span>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="small text-muted py-2 mb-0">No food logged yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Dinner -->
+        <div class="glass-card p-3" style="background: rgba(14, 22, 17, 0.9);">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid var(--border-subtle);">
+                <strong class="text-yellow"><i class="fa-solid fa-plate-wheat mr-1"></i> Dinner</strong>
+                <span class="small text-muted">{{ meals.dinner | length }} items</span>
+            </div>
+            {% if meals.dinner %}
+                <ul class="list-unstyled mb-0" style="list-style: none;">
+                {% for item in meals.dinner %}
+                    <li class="d-flex justify-content-between small text-secondary py-1" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <span class="text-truncate" style="max-width: 140px;">{{ item.food_name }} ({{ item.quantity_grams }}g)</span>
+                        <span class="mono-num text-white">{{ item.calories | round_val }} kcal</span>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="small text-muted py-2 mb-0">No food logged yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Snacks -->
+        <div class="glass-card p-3" style="background: rgba(14, 22, 17, 0.9);">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid var(--border-subtle);">
+                <strong class="text-emerald"><i class="fa-solid fa-apple-whole mr-1"></i> Snacks</strong>
+                <span class="small text-muted">{{ meals.snacks | length }} items</span>
+            </div>
+            {% if meals.snacks %}
+                <ul class="list-unstyled mb-0" style="list-style: none;">
+                {% for item in meals.snacks %}
+                    <li class="d-flex justify-content-between small text-secondary py-1" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <span class="text-truncate" style="max-width: 140px;">{{ item.food_name }} ({{ item.quantity_grams }}g)</span>
+                        <span class="mono-num text-white">{{ item.calories | round_val }} kcal</span>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="small text-muted py-2 mb-0">No food logged yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- SECTION 4: QUICK ATHLETIC ACTIONS -->
+<div class="grid-cols-3">
+    <div class="glass-card">
+        <h4 class="h6 font-weight-bold text-white mb-2"><i class="fa-solid fa-cube text-neon mr-1"></i> 3D Muscle Anatomy</h4>
+        <p class="small text-secondary mb-3">Explore interactive 3D human musculature and pinpoint exact gym machine and home exercises.</p>
+        <a href="{{ url_for('fitness.muscle_anatomy') }}" class="btn-secondary-glow btn-sm w-100">Open 3D Model</a>
+    </div>
+
+    <div class="glass-card">
+        <h4 class="h6 font-weight-bold text-white mb-2"><i class="fa-solid fa-clipboard-check text-cyan mr-1"></i> Sets & Reps Gym Logger</h4>
+        <p class="small text-secondary mb-3">Record weights lifted in kg, track completed repetitions, and shatter personal records.</p>
+        <a href="{{ url_for('fitness.workout_tracker') }}" class="btn-secondary-glow btn-sm w-100">Log Today's Workout</a>
+    </div>
+
+    <div class="glass-card">
+        <h4 class="h6 font-weight-bold text-white mb-2"><i class="fa-solid fa-microchip text-yellow mr-1"></i> AI Fitness Assistant</h4>
+        <p class="small text-secondary mb-3">Get instant answers on weight gain, fat loss, creatine, Indian meal plans, and injury prevention.</p>
+        <a href="{{ url_for('assistant.assistant') }}" class="btn-secondary-glow btn-sm w-100">Ask Assistant</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Weekly Calories Bar Chart
+    const calCanvas = document.getElementById('weeklyCaloriesChart');
+    if (calCanvas) {
+        const days = {{ chart_days | tojson }};
+        const calories = {{ chart_calories | tojson }};
+        const target = {{ calorie_target }};
+
+        new Chart(calCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: days,
+                datasets: [{
+                    label: 'Calories Consumed',
+                    data: calories,
+                    backgroundColor: 'rgba(0, 230, 118, 0.45)',
+                    borderColor: '#00e676',
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    hoverBackgroundColor: '#00e676'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a39b' }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a39b' },
+                        suggestedMax: target + 300
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Macro Doughnut Chart
+    const macroCanvas = document.getElementById('macroDoughnutChart');
+    if (macroCanvas) {
+        const p = {{ daily_totals.protein }};
+        const c = {{ daily_totals.carbs }};
+        const f = {{ daily_totals.fat }};
+
+        // If no foods logged yet, show subtle empty ring
+        const hasData = (p + c + f) > 0;
+        const chartData = hasData ? [p * 4, c * 4, f * 9] : [1, 1, 1];
+        const chartColors = hasData
+            ? ['#06b6d4', '#fbbf24', '#f43f5e']
+            : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.08)'];
+
+        new Chart(macroCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Protein (kcal)', 'Carbs (kcal)', 'Fat (kcal)'],
+                datasets: [{
+                    data: chartData,
+                    backgroundColor: chartColors,
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & CSV Data Export | NutriTrack 3D{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Weekly Reports & Data Export</h1>
+        <p class="page-subtitle">Detailed 7-day metabolic intake averages, workout statistics, and permanent CSV data exports.</p>
+    </div>
+
+    <!-- CSV Export Actions -->
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('progress.export_food_logs') }}" class="btn-primary-glow btn-sm">
+            <i class="fa-solid fa-file-csv"></i> Export Food Logs CSV
+        </a>
+        <a href="{{ url_for('progress.export_weight_logs') }}" class="btn-secondary-glow btn-sm">
+            <i class="fa-solid fa-file-csv text-neon"></i> Export Weight CSV
+        </a>
+        <a href="{{ url_for('progress.export_workout_logs') }}" class="btn-secondary-glow btn-sm">
+            <i class="fa-solid fa-file-csv text-cyan"></i> Export Workouts CSV
+        </a>
+    </div>
+</div>
+
+<!-- 7-DAY NUTRITION AVERAGES -->
+<div class="grid-cols-4 mb-4">
+    <div class="glass-card p-3">
+        <span class="stat-label">AVG DAILY CALORIES</span>
+        <div class="h2 font-weight-bold mono-num text-neon mt-1 mb-0">{{ avg_cal }} <span class="stat-unit">kcal/day</span></div>
+        <span class="small text-muted">Target: {{ profile.daily_calorie_target | round_val }} kcal</span>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">AVG DAILY PROTEIN</span>
+        <div class="h2 font-weight-bold mono-num text-cyan mt-1 mb-0">{{ avg_p }} <span class="stat-unit">g/day</span></div>
+        <span class="small text-muted">Target: {{ profile.protein_target | round_val }}g</span>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">AVG DAILY CARBS</span>
+        <div class="h2 font-weight-bold mono-num text-yellow mt-1 mb-0">{{ avg_c }} <span class="stat-unit">g/day</span></div>
+        <span class="small text-muted">Target: {{ profile.carbs_target | round_val }}g</span>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">AVG DAILY WATER</span>
+        <div class="h2 font-weight-bold mono-num mt-1 mb-0" style="color: #38bdf8;">{{ avg_w }} <span class="stat-unit">ml/day</span></div>
+        <span class="small text-muted">Target: {{ profile.water_target | round_val }} ml</span>
+    </div>
+</div>
+
+<!-- 7-DAY DAILY BREAKDOWN TABLE -->
+<div class="glass-card mb-4">
+    <div class="card-header-flex">
+        <h3 class="card-title"><i class="fa-solid fa-calendar-week text-neon"></i> Past 7 Days Detailed Nutrition Breakdown</h3>
+        <span class="badge badge-gym">Live User Data</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Day & Date</th>
+                    <th>Calories</th>
+                    <th>Protein</th>
+                    <th>Carbohydrates</th>
+                    <th>Fats</th>
+                    <th>Water Intake</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in daily_breakdown %}
+                <tr>
+                    <td class="font-weight-bold text-white">{{ d.day_name }}</td>
+                    <td class="mono-num text-neon">{{ d.calories }} kcal</td>
+                    <td class="mono-num text-cyan">{{ d.protein }}g</td>
+                    <td class="mono-num text-yellow">{{ d.carbs }}g</td>
+                    <td class="mono-num text-red">{{ d.fat }}g</td>
+                    <td class="mono-num" style="color: #38bdf8;">{{ d.water }} ml</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- DATA BACKUP & EXPORT CARDS -->
+<div class="grid-cols-3">
+    <div class="glass-card p-4">
+        <div class="feature-icon-box" style="margin-bottom: 14px;">
+            <i class="fa-solid fa-utensils"></i>
+        </div>
+        <h4 class="h6 font-weight-bold text-white mb-1">Nutrition & Food Diary CSV</h4>
+        <p class="small text-secondary mb-3">Download complete history of all logged meals, portion grams, and micro/macro totals.</p>
+        <a href="{{ url_for('progress.export_food_logs') }}" class="btn-primary-glow btn-sm w-100">
+            <i class="fa-solid fa-download"></i> Download Food CSV
+        </a>
+    </div>
+
+    <div class="glass-card p-4">
+        <div class="feature-icon-box" style="background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.3); color: var(--accent-cyan); margin-bottom: 14px;">
+            <i class="fa-solid fa-weight-scale"></i>
+        </div>
+        <h4 class="h6 font-weight-bold text-white mb-1">Body Weight History CSV</h4>
+        <p class="small text-secondary mb-3">Export your weight weigh-ins, date stamps, and personal journal notes for spreadsheets.</p>
+        <a href="{{ url_for('progress.export_weight_logs') }}" class="btn-secondary-glow btn-sm w-100">
+            <i class="fa-solid fa-download text-cyan"></i> Download Weight CSV
+        </a>
+    </div>
+
+    <div class="glass-card p-4">
+        <div class="feature-icon-box" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.3); color: var(--accent-yellow); margin-bottom: 14px;">
+            <i class="fa-solid fa-dumbbell"></i>
+        </div>
+        <h4 class="h6 font-weight-bold text-white mb-1">Workout & Sets History CSV</h4>
+        <p class="small text-secondary mb-3">Download your gym sessions, exercise names, sets, kilograms lifted, and reps completed.</p>
+        <a href="{{ url_for('progress.export_workout_logs') }}" class="btn-secondary-glow btn-sm w-100">
+            <i class="fa-solid fa-download text-yellow"></i> Download Workouts CSV
+        </a>
+    </div>
+</div>
+{% endblock %}

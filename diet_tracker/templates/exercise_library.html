@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Exercise & Machine Library | NutriTrack 3D{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Exercise & Machine Library</h1>
+        <p class="page-subtitle">Search over 40+ verified gym machine and home exercises with biomechanical instructions.</p>
+    </div>
+</div>
+
+<!-- SEARCH & MULTI-FILTER BAR -->
+<div class="glass-card mb-4 p-3">
+    <form method="GET" action="{{ url_for('fitness.exercise_library') }}">
+        <div class="grid-cols-4 mb-2" style="gap: 12px;">
+            <!-- Search Keyword -->
+            <div>
+                <label class="form-label small mb-1">Search Name / Machine</label>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="e.g. Press, Squat, Cable" value="{{ search or '' }}">
+            </div>
+
+            <!-- Muscle Group -->
+            <div>
+                <label class="form-label small mb-1">Muscle Group</label>
+                <select name="muscle" class="form-control form-control-sm">
+                    <option value="">All Muscles</option>
+                    {% for m in muscle_groups %}
+                    <option value="{{ m }}" {% if selected_muscle == m %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Equipment -->
+            <div>
+                <label class="form-label small mb-1">Equipment</label>
+                <select name="equipment" class="form-control form-control-sm">
+                    <option value="">All Equipment</option>
+                    {% for eq in equipments %}
+                    <option value="{{ eq }}" {% if selected_equipment == eq %}selected{% endif %}>{{ eq }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Location -->
+            <div>
+                <label class="form-label small mb-1">Location</label>
+                <select name="location" class="form-control form-control-sm">
+                    <option value="">Home & Gym</option>
+                    <option value="Home" {% if selected_location == 'Home' %}selected{% endif %}>Home Only</option>
+                    <option value="Gym" {% if selected_location == 'Gym' %}selected{% endif %}>Gym Only</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="text-muted small">Found <strong>{{ exercises | length }}</strong> exercises matching criteria</span>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('fitness.exercise_library') }}" class="btn-sm btn-secondary-glow">Reset</a>
+                <button type="submit" class="btn-sm btn-primary-glow">
+                    <i class="fa-solid fa-magnifying-glass"></i> Filter Library
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- EXERCISE LIST -->
+<div class="grid-cols-3 mb-4" style="gap: 20px;">
+    {% for ex in exercises %}
+    <div class="glass-card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge {% if ex.location == 'Gym' %}badge-gym{% else %}badge-home{% endif %}">{{ ex.location }}</span>
+            <span class="small text-muted">{{ ex.difficulty }}</span>
+        </div>
+
+        <h3 class="h6 font-weight-bold text-white mb-1">{{ ex.name }}</h3>
+        <div class="small text-neon mb-2">{{ ex.muscle_group }} &bull; {{ ex.equipment }}</div>
+
+        <p class="small text-secondary mb-3" style="min-height: 44px;">
+            {{ ex.technique | truncate(110) }}
+        </p>
+
+        <div class="d-flex justify-content-between small text-muted mb-3 p-2 rounded" style="background: rgba(255,255,255,0.03);">
+            <span><strong class="text-white">{{ ex.recommended_sets }}</strong> sets</span>
+            <span><strong class="text-white">{{ ex.recommended_reps }}</strong> reps</span>
+            <span><strong class="text-white">{{ ex.rest_seconds }}s</strong> rest</span>
+        </div>
+
+        <a href="{{ url_for('fitness.workout_tracker') }}" class="btn-secondary-glow btn-sm w-100 text-center">
+            <i class="fa-solid fa-plus text-neon mr-1"></i> Log in Tracker
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

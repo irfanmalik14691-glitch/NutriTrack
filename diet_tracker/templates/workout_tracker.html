@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Sets & Reps Workout Tracker | NutriTrack 3D{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Sets & Reps Workout Tracker</h1>
+        <p class="page-subtitle">Record your working sets, track weights lifted in kilograms, and smash personal records.</p>
+    </div>
+</div>
+
+<!-- TOP ATHLETIC STATS -->
+<div class="grid-cols-4 mb-4">
+    <div class="glass-card p-3">
+        <span class="stat-label">TOTAL WORKOUTS</span>
+        <div class="h2 font-weight-bold mono-num text-neon mt-1 mb-0">{{ stats.total_workouts }}</div>
+        <span class="small text-muted">Completed sessions</span>
+    </div>
+    <div class="glass-card p-3">
+        <span class="stat-label">TOTAL SETS LOGGED</span>
+        <div class="h2 font-weight-bold mono-num text-cyan mt-1 mb-0">{{ stats.total_sets }}</div>
+        <span class="small text-muted">Volume repetitions</span>
+    </div>
+    <div class="glass-card p-3">
+        <span class="stat-label">WORKOUTS THIS WEEK</span>
+        <div class="h2 font-weight-bold mono-num text-yellow mt-1 mb-0">{{ stats.weekly_completed }}</div>
+        <span class="small text-muted">Goal: {{ profile.workout_days }} days/week</span>
+    </div>
+    <div class="glass-card p-3">
+        <span class="stat-label">PERSONAL RECORDS</span>
+        <div class="h2 font-weight-bold mono-num text-emerald mt-1 mb-0">{{ stats.personal_records | length }}</div>
+        <span class="small text-muted">Top recorded PRs</span>
+    </div>
+</div>
+
+<!-- LOG NEW WORKING SET FORM -->
+<div class="grid-cols-3 mb-4">
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header-flex">
+            <h3 class="card-title"><i class="fa-solid fa-clipboard-check text-neon"></i> Log Working Set</h3>
+            <span class="badge badge-gym">Date: {{ today }}</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('fitness.workout_tracker') }}">
+            <input type="hidden" name="action" value="log_set">
+            <input type="hidden" name="workout_date" value="{{ today }}">
+
+            <div class="grid-cols-2 mb-3" style="gap: 16px;">
+                <div class="form-group mb-0">
+                    <label class="form-label small">Session Name</label>
+                    <input type="text" name="session_name" class="form-control" value="Upper Body Power" required>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label class="form-label small">Exercise</label>
+                    <select name="exercise_name" class="form-control" required>
+                        {% for ex in exercises %}
+                        <option value="{{ ex.name }}">{{ ex.name }} [{{ ex.muscle_group }}]</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-cols-3 mb-3" style="gap: 16px;">
+                <div class="form-group mb-0">
+                    <label class="form-label small">Set Number</label>
+                    <input type="number" name="set_number" class="form-control" value="1" min="1" max="10" required>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label small">Weight Lifted (kg)</label>
+                    <input type="number" step="0.5" name="weight_kg" class="form-control" placeholder="0 for bodyweight" value="40" required>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label small">Completed Repetitions</label>
+                    <input type="number" name="completed_reps" class="form-control" value="10" min="1" max="100" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary-glow w-100">
+                <i class="fa-solid fa-check"></i> Record Set in Database
+            </button>
+        </form>
+    </div>
+
+    <!-- PERSONAL RECORDS (PRs) CARD -->
+    <div class="glass-card">
+        <div class="card-header-flex">
+            <h3 class="card-title"><i class="fa-solid fa-trophy text-yellow"></i> Personal Records</h3>
+        </div>
+
+        {% if stats.personal_records %}
+        <div class="d-flex flex-column gap-2">
+            {% for pr in stats.personal_records %}
+            <div class="p-2 px-3 rounded d-flex justify-content-between align-items-center" style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15);">
+                <div>
+                    <strong class="d-block text-white small">{{ pr.exercise_name }}</strong>
+                    <span class="text-muted small">Max Reps: {{ pr.max_reps }}</span>
+                </div>
+                <div class="mono-num text-yellow h6 mb-0">{{ pr.max_weight }} kg</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="small text-muted mb-0">No PRs recorded yet. Log your heavy working sets to establish records!</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- RECENT WORKOUT SESSIONS -->
+<div class="glass-card">
+    <div class="card-header-flex">
+        <h3 class="card-title"><i class="fa-solid fa-history"></i> Recent Workout Sessions</h3>
+    </div>
+
+    {% if recent_sessions %}
+        {% for s in recent_sessions %}
+        <div class="glass-card mb-3 p-3" style="background: rgba(14, 22, 17, 0.9);">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <div>
+                    <h4 class="h6 font-weight-bold text-white mb-0">{{ s.session.session_name }}</h4>
+                    <span class="text-muted small">{{ s.session.workout_date }} &bull; {{ s.total_sets }} working sets completed</span>
+                </div>
+                <span class="badge badge-gym"><i class="fa-solid fa-check"></i> Completed</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Exercise</th>
+                            <th>Set #</th>
+                            <th>Weight Lifted</th>
+                            <th>Reps Completed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in s.sets %}
+                        <tr>
+                            <td class="font-weight-bold text-white">{{ st.exercise_name }}</td>
+                            <td>Set {{ st.set_number }}</td>
+                            <td class="mono-num text-neon">{{ st.weight_kg }} kg</td>
+                            <td class="mono-num text-cyan">{{ st.completed_reps }} reps</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <p class="small text-muted py-3 mb-0">No workouts recorded yet. Use the form above to log your first session!</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Profile & Metabolic Settings | NutriTrack 3D{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Profile & Metabolic Calculator</h1>
+        <p class="page-subtitle">Configure your biometric parameters to automatically compute BMR, TDEE, and macronutrient targets.</p>
+    </div>
+</div>
+
+<!-- CALCULATED METABOLIC RESULTS GRID -->
+<div class="grid-cols-4 mb-4">
+    <!-- BMI -->
+    <div class="glass-card p-3">
+        <span class="stat-label">BODY MASS INDEX (BMI)</span>
+        <div class="h2 font-weight-bold mono-num text-cyan mt-1 mb-0">{{ profile.bmi }}</div>
+        <span class="small text-muted">
+            {% if profile.bmi < 18.5 %}Underweight{% elif profile.bmi < 25 %}Normal Range (18.5-24.9){% elif profile.bmi < 30 %}Overweight{% else %}Obese{% endif %}
+        </span>
+    </div>
+
+    <!-- BMR -->
+    <div class="glass-card p-3">
+        <span class="stat-label">BASAL METABOLIC RATE (BMR)</span>
+        <div class="h2 font-weight-bold mono-num text-yellow mt-1 mb-0">{{ profile.bmr | round_val(0) }} <span class="stat-unit">kcal</span></div>
+        <span class="small text-muted">Mifflin-St Jeor Baseline</span>
+    </div>
+
+    <!-- TDEE -->
+    <div class="glass-card p-3">
+        <span class="stat-label">TOTAL ENERGY (TDEE)</span>
+        <div class="h2 font-weight-bold mono-num text-white mt-1 mb-0">{{ profile.tdee | round_val(0) }} <span class="stat-unit">kcal</span></div>
+        <span class="small text-muted">Maintenance Burn / Day</span>
+    </div>
+
+    <!-- CALORIE TARGET -->
+    <div class="glass-card p-3">
+        <span class="stat-label">DAILY CALORIE TARGET</span>
+        <div class="h2 font-weight-bold mono-num text-neon mt-1 mb-0">{{ profile.daily_calorie_target | round_val(0) }} <span class="stat-unit">kcal</span></div>
+        <span class="small text-neon font-weight-bold">For: {{ profile.fitness_goal }}</span>
+    </div>
+</div>
+
+<!-- MACRO SPLIT CARDS -->
+<div class="grid-cols-4 mb-4">
+    <div class="glass-card p-3">
+        <span class="stat-label">PROTEIN TARGET</span>
+        <div class="h3 font-weight-bold mono-num text-cyan mt-1 mb-0">{{ profile.protein_target }}g</div>
+        <span class="small text-muted">{{ (profile.protein_target * 4) | round_val(0) }} kcal (4 kcal/g)</span>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">CARBS TARGET</span>
+        <div class="h3 font-weight-bold mono-num text-yellow mt-1 mb-0">{{ profile.carbs_target }}g</div>
+        <span class="small text-muted">{{ (profile.carbs_target * 4) | round_val(0) }} kcal (4 kcal/g)</span>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">HEALTHY FAT TARGET</span>
+        <div class="h3 font-weight-bold mono-num text-red mt-1 mb-0">{{ profile.fat_target }}g</div>
+        <span class="small text-muted">{{ (profile.fat_target * 9) | round_val(0) }} kcal (9 kcal/g)</span>
+    </div>
+
+    <div class="glass-card p-3">
+        <span class="stat-label">DAILY WATER GOAL</span>
+        <div class="h3 font-weight-bold mono-num mt-1 mb-0" style="color: #38bdf8;">{{ profile.water_target | round_val(0) }} ml</div>
+        <span class="small text-muted">Baseline: 35ml / kg</span>
+    </div>
+</div>
+
+<!-- PROFILE EDIT FORM -->
+<div class="glass-card mb-4 p-4">
+    <div class="card-header-flex mb-3">
+        <h3 class="card-title"><i class="fa-solid fa-user-pen text-neon"></i> Edit Biometrics & Fitness Objectives</h3>
+        <span class="badge badge-gym">Instant Recalculation</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.profile') }}">
+        <div class="grid-cols-3 mb-3" style="gap: 16px;">
+            <div>
+                <label class="form-label small">Display Name</label>
+                <input type="text" name="name" class="form-control" value="{{ profile.name }}" required>
+            </div>
+            <div>
+                <label class="form-label small">Age (Years)</label>
+                <input type="number" name="age" class="form-control" value="{{ profile.age }}" min="12" max="100" required>
+            </div>
+            <div>
+                <label class="form-label small">Gender</label>
+                <select name="gender" class="form-control">
+                    <option value="male" {% if profile.gender == 'male' %}selected{% endif %}>Male</option>
+                    <option value="female" {% if profile.gender == 'female' %}selected{% endif %}>Female</option>
+                    <option value="other" {% if profile.gender == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-cols-3 mb-3" style="gap: 16px;">
+            <div>
+                <label class="form-label small">Height (cm)</label>
+                <input type="number" step="0.5" name="height" class="form-control" value="{{ profile.height }}" min="100" max="250" required>
+            </div>
+            <div>
+                <label class="form-label small">Current Weight (kg)</label>
+                <input type="number" step="0.1" name="current_weight" class="form-control" value="{{ profile.current_weight }}" min="30" max="300" required>
+            </div>
+            <div>
+                <label class="form-label small">Target Weight (kg)</label>
+                <input type="number" step="0.1" name="target_weight" class="form-control" value="{{ profile.target_weight }}" min="30" max="300" required>
+            </div>
+        </div>
+
+        <div class="grid-cols-2 mb-3" style="gap: 16px;">
+            <div>
+                <label class="form-label small">Physical Activity Level</label>
+                <select name="activity_level" class="form-control">
+                    <option value="sedentary" {% if profile.activity_level == 'sedentary' %}selected{% endif %}>Sedentary (Little or no exercise, desk job - BMR x 1.2)</option>
+                    <option value="light" {% if profile.activity_level == 'light' %}selected{% endif %}>Lightly Active (Light exercise 1-3 days/week - BMR x 1.375)</option>
+                    <option value="moderate" {% if profile.activity_level == 'moderate' %}selected{% endif %}>Moderately Active (Moderate exercise 3-5 days/week - BMR x 1.55)</option>
+                    <option value="active" {% if profile.activity_level == 'active' %}selected{% endif %}>Very Active (Hard training 6-7 days/week - BMR x 1.725)</option>
+                    <option value="very_active" {% if profile.activity_level == 'very_active' %}selected{% endif %}>Extremely Active (Heavy manual work & 2x/day training - BMR x 1.9)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="form-label small">Core Fitness Goal</label>
+                <select name="fitness_goal" class="form-control">
+                    <option value="Weight Gain" {% if profile.fitness_goal == 'Weight Gain' %}selected{% endif %}>Weight Gain (+500 kcal surplus, 1.8g/kg protein)</option>
+                    <option value="Weight Loss" {% if profile.fitness_goal == 'Weight Loss' %}selected{% endif %}>Weight Loss (-500 kcal safe deficit, 1.8g/kg protein)</option>
+                    <option value="Muscle Building" {% if profile.fitness_goal == 'Muscle Building' %}selected{% endif %}>Muscle Building (+250 kcal lean surplus, 2.0g/kg protein)</option>
+                    <option value="Weight Maintenance" {% if profile.fitness_goal == 'Weight Maintenance' %}selected{% endif %}>Weight Maintenance (TDEE energy balance, 1.6g/kg protein)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-cols-3 mb-4" style="gap: 16px;">
+            <div>
+                <label class="form-label small">Experience Level</label>
+                <select name="experience_level" class="form-control">
+                    <option value="Beginner" {% if profile.experience_level == 'Beginner' %}selected{% endif %}>Beginner</option>
+                    <option value="Intermediate" {% if profile.experience_level == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+                    <option value="Advanced" {% if profile.experience_level == 'Advanced' %}selected{% endif %}>Advanced</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small">Workout Location</label>
+                <select name="workout_location" class="form-control">
+                    <option value="Both" {% if profile.workout_location == 'Both' %}selected{% endif %}>Both (Home & Gym)</option>
+                    <option value="Gym" {% if profile.workout_location == 'Gym' %}selected{% endif %}>Gym Only</option>
+                    <option value="Home" {% if profile.workout_location == 'Home' %}selected{% endif %}>Home Only</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small">Target Workout Days</label>
+                <select name="workout_days" class="form-control">
+                    <option value="3" {% if profile.workout_days == 3 %}selected{% endif %}>3 Days / Week</option>
+                    <option value="4" {% if profile.workout_days == 4 %}selected{% endif %}>4 Days / Week</option>
+                    <option value="5" {% if profile.workout_days == 5 %}selected{% endif %}>5 Days / Week</option>
+                    <option value="6" {% if profile.workout_days == 6 %}selected{% endif %}>6 Days / Week</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary-glow w-100" style="padding: 12px;">
+            <i class="fa-solid fa-floppy-disk"></i> Save & Recalculate Metabolic Targets
+        </button>
+    </form>
+</div>
+
+<!-- NUTRITIONAL FORMULA EXPLANATION -->
+<div class="glass-card p-4">
+    <h4 class="h6 font-weight-bold text-white mb-2"><i class="fa-solid fa-square-root-variable text-neon mr-1"></i> Scientific Nutrition Formulation Notice</h4>
+    <p class="small text-secondary mb-2">
+        NutriTrack uses the clinically validated <strong>Mifflin-St Jeor formula</strong>:
+        <br>
+        <code>Men: BMR = (10 &times; weight[kg]) + (6.25 &times; height[cm]) - (5 &times; age) + 5</code><br>
+        <code>Women: BMR = (10 &times; weight[kg]) + (6.25 &times; height[cm]) - (5 &times; age) - 161</code>
+    </p>
+    <p class="small text-muted mb-0">
+        <em>Scientific Disclaimer:</em> All BMR, TDEE, and macronutrient targets calculated by NutriTrack are scientific estimates designed for healthy athletic adults. Individual basal metabolism varies with genetics, thyroid function, and non-exercise activity thermogenesis (NEAT). Consult a licensed sports dietician or physician before beginning any rapid caloric alteration.
+    </p>
+</div>
+{% endblock %}

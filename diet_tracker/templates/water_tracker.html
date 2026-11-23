@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Water Tracker | NutriTrack 3D{% endblock %}
+
+{% block extra_head %}
+<style>
+.water-bottle-visual {
+    width: 140px;
+    height: 280px;
+    border-radius: 20px 20px 30px 30px;
+    border: 3px solid rgba(14, 165, 233, 0.4);
+    background: rgba(14, 165, 233, 0.05);
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(14, 165, 233, 0.15), inset 0 0 20px rgba(14, 165, 233, 0.1);
+}
+.water-bottle-cap {
+    width: 60px;
+    height: 20px;
+    background: #0284c7;
+    border-radius: 6px 6px 0 0;
+    margin: 0 auto 4px;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+}
+.water-fill-level {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+    transition: height 1s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Smart Hydration Tracker</h1>
+        <p class="page-subtitle">Optimal cellular hydration accelerates protein synthesis, muscular stamina, and metabolic rate.</p>
+    </div>
+</div>
+
+<div class="grid-cols-3 mb-4">
+    <!-- Visual Animated Bottle Card -->
+    <div class="glass-card text-center" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 36px 20px;">
+        <div class="water-bottle-cap"></div>
+        <div class="water-bottle-visual">
+            <div class="water-fill-level" style="height: {{ water_pct }}%;">
+                {% if water_pct > 15 %}{{ water_pct }}%{% endif %}
+            </div>
+        </div>
+        <div class="mt-4">
+            <div class="h2 font-weight-bold mono-num mb-1" style="color: #38bdf8;">
+                {{ water_today }} <span class="stat-unit">/ {{ water_target }} ml</span>
+            </div>
+            <span class="text-secondary small">{{ water_pct }}% of daily hydration goal achieved</span>
+        </div>
+    </div>
+
+    <!-- Quick Add Water Form Card -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header-flex">
+            <h3 class="card-title"><i class="fa-solid fa-droplet" style="color: #38bdf8;"></i> Log Hydration</h3>
+            <span class="badge badge-gym">Date: {{ today }}</span>
+        </div>
+
+        <p class="text-secondary small mb-4">Select a preset container or enter exact milliliter volume consumed:</p>
+
+        <!-- Quick Presets -->
+        <div class="grid-cols-4 mb-4" style="gap: 12px;">
+            <form method="POST" action="{{ url_for('diet.water_tracker') }}" class="w-100">
+                <input type="hidden" name="amount_ml" value="250">
+                <button type="submit" class="glass-card p-3 w-100 text-center btn-quick-hydro">
+                    <i class="fa-solid fa-glass-water h4 mb-2 d-block" style="color: #38bdf8;"></i>
+                    <strong class="d-block text-white">+250 ml</strong>
+                    <span class="text-muted small">Glass</span>
+                </button>
+            </form>
+
+            <form method="POST" action="{{ url_for('diet.water_tracker') }}" class="w-100">
+                <input type="hidden" name="amount_ml" value="500">
+                <button type="submit" class="glass-card p-3 w-100 text-center btn-quick-hydro">
+                    <i class="fa-solid fa-bottle-water h4 mb-2 d-block" style="color: #38bdf8;"></i>
+                    <strong class="d-block text-white">+500 ml</strong>
+                    <span class="text-muted small">Standard Bottle</span>
+                </button>
+            </form>
+
+            <form method="POST" action="{{ url_for('diet.water_tracker') }}" class="w-100">
+                <input type="hidden" name="amount_ml" value="750">
+                <button type="submit" class="glass-card p-3 w-100 text-center btn-quick-hydro">
+                    <i class="fa-solid fa-prescription-bottle h4 mb-2 d-block" style="color: #38bdf8;"></i>
+                    <strong class="d-block text-white">+750 ml</strong>
+                    <span class="text-muted small">Sports Shaker</span>
+                </button>
+            </form>
+
+            <form method="POST" action="{{ url_for('diet.water_tracker') }}" class="w-100">
+                <input type="hidden" name="amount_ml" value="1000">
+                <button type="submit" class="glass-card p-3 w-100 text-center btn-quick-hydro">
+                    <i class="fa-solid fa-jug-detergent h4 mb-2 d-block" style="color: #38bdf8;"></i>
+                    <strong class="d-block text-white">+1,000 ml</strong>
+                    <span class="text-muted small">Large Jug</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Custom Volume Input -->
+        <form method="POST" action="{{ url_for('diet.water_tracker') }}" id="water_log_form" class="mt-3">
+            <label class="form-label">Custom Water Quantity (ml)</label>
+            <div class="d-flex gap-2">
+                <input type="number" name="amount_ml" id="water_amount_input" class="form-control" placeholder="e.g. 350" min="50" step="50" required>
+                <button type="submit" class="btn-primary-glow" style="white-space: nowrap;">
+                    <i class="fa-solid fa-plus"></i> Add Water
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-4 p-3 rounded" style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.2);">
+            <div class="small text-secondary">
+                <strong style="color: #38bdf8;"><i class="fa-solid fa-circle-info"></i> Scientific Hydration Formula:</strong>
+                Your daily target of <strong>{{ water_target }} ml</strong> is estimated using the athletic baseline: <code>Body Weight ({{ profile.current_weight }} kg) &times; 35 ml</code>. Drink 500ml upon waking to kickstart cellular metabolism.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WATER HISTORY TABLE -->
+<div class="glass-card">
+    <div class="card-header-flex">
+        <h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Past 7 Days Hydration History</h3>
+    </div>
+
+    {% if water_history %}
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Water Consumed</th>
+                    <th>Daily Target</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in water_history %}
+                <tr>
+                    <td class="font-weight-bold text-white">{{ item.log_date }}</td>
+                    <td class="mono-num" style="color: #38bdf8;">{{ item.total_ml }} ml</td>
+                    <td class="mono-num text-muted">{{ water_target }} ml</td>
+                    <td>
+                        {% if item.total_ml >= water_target %}
+                        <span class="badge" style="background: rgba(0, 230, 118, 0.15); color: var(--neon-green); border: 1px solid var(--neon-green);">Target Met &#10003;</span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); border: 1px solid var(--accent-yellow);">In Progress</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted small py-3 mb-0">No past water records found. Start logging today!</p>
+    {% endif %}
+</div>
+{% endblock %}

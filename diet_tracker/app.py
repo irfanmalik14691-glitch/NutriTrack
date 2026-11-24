@@ -12,9 +12,12 @@ from routes.assistant_routes import assistant_bp
 # Load environment variables if .env exists
 load_dotenv()
 
-def create_app():
+def create_app():  
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nutritrack-super-secret-key-2026-cse-btech')
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+
+    if not app.config['SECRET_KEY']:
+     raise RuntimeError("SECRET_KEY environment variable is not set")
 
     # Register blueprints
     app.register_blueprint(auth_bp)

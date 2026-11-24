@@ -122,3 +122,12 @@ def sitemap():
     xml += '</urlset>'
 
     return Response(xml, mimetype='application/xml')
+
+@main_bp.route('/robots.txt')
+def robots_txt():
+    content = """User-agent: *
+Allow: /
+
+Sitemap: https://nutritrack-71b1.onrender.com/sitemap.xml
+"""
+    return Response(content, mimetype='text/plain')
